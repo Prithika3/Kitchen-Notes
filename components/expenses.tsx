@@ -8,6 +8,7 @@ import { formatMoney, monthRange, todayISO } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
@@ -165,13 +166,7 @@ export function Expenses({ month }: { month: string }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="exp-date">Date</Label>
-              <Input
-                id="exp-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+              <DatePicker id="exp-date" value={date} onChange={setDate} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="exp-cat">Category</Label>

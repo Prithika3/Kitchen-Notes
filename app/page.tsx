@@ -7,7 +7,7 @@ import { ChefHat, LogOut, ShoppingBasket, Wallet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { currentMonth, monthLabel } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/date-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Expenses } from "@/components/expenses";
 import { ShoppingList } from "@/components/shopping-list";
@@ -62,13 +62,7 @@ export default function HomePage() {
         <label htmlFor="month" className="text-sm font-medium">
           Month
         </label>
-        <Input
-          id="month"
-          type="month"
-          value={month}
-          onChange={(e) => e.target.value && setMonth(e.target.value)}
-          className="w-auto"
-        />
+        <MonthPicker id="month" value={month} onChange={setMonth} />
       </div>
 
       <Tabs defaultValue="expenses">
