@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { formatMoney, monthRange, todayISO } from "@/lib/utils";
@@ -35,6 +35,9 @@ const CATEGORIES = [
   "Other",
 ];
 
+const selectClass =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm";
+
 export function Expenses({ month }: { month: string }) {
   const [items, setItems] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +48,14 @@ export function Expenses({ month }: { month: string }) {
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [date, setDate] = useState(todayISO());
   const [saving, setSaving] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editCategory, setEditCategory] = useState(CATEGORIES[0]);
+  const [editDate, setEditDate] = useState(todayISO());
+  const [updating, setUpdating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,6 +77,7 @@ export function Expenses({ month }: { month: string }) {
   }, [month]);
 
   useEffect(() => {
+    setEditingId(null);
     load();
   }, [load]);
 
@@ -101,15 +113,57 @@ export function Expenses({ month }: { month: string }) {
     setSaving(false);
   }
 
+  function startEdit(i: Expense) {
+    setError(null);
+    setEditingId(i.id);
+    setEditTitle(i.title);
+    setEditAmount(String(i.amount));
+    setEditCategory(i.category);
+    setEditDate(i.spent_on);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingId) return;
+    const value = Number(editAmount);
+    if (!editTitle.trim() || editAmount === "" || !(value >= 0)) return;
+    setUpdating(true);
+    setError(null);
+    const { error } = await supabase
+      .from("expenses")
+      .update({
+        title: editTitle.trim(),
+        amount: value,
+        category: editCategory,
+        spent_on: editDate,
+      })
+      .eq("id", editingId);
+    if (error) setError(error.message);
+    else {
+      setEditingId(null);
+      await load();
+    }
+    setUpdating(false);
+  }
+
   async function remove(id: string) {
     const previous = items;
     setItems(items.filter((i) => i.id !== id));
+    if (editingId === id) setEditingId(null);
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (error) {
       setError(error.message);
       setItems(previous);
     }
   }
+
+  const editCategoryOptions = CATEGORIES.includes(editCategory)
+    ? CATEGORIES
+    : [editCategory, ...CATEGORIES];
 
   return (
     <div className="space-y-4">
@@ -174,7 +228,7 @@ export function Expenses({ month }: { month: string }) {
                 id="exp-cat"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
+                className={selectClass}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -205,25 +259,109 @@ export function Expenses({ month }: { month: string }) {
             </p>
           ) : (
             <ul className="divide-y">
-              {items.map((i) => (
-                <li key={i.id} className="flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{i.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {i.category} · {i.spent_on}
-                    </p>
-                  </div>
-                  <span className="font-semibold">{formatMoney(i.amount)}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Delete ${i.title}`}
-                    onClick={() => remove(i.id)}
-                  >
-                    <Trash2 className="text-destructive" />
-                  </Button>
-                </li>
-              ))}
+              {items.map((i) =>
+                editingId === i.id ? (
+                  <li key={i.id} className="py-3">
+                    <form
+                      onSubmit={saveEdit}
+                      className="grid gap-3 rounded-lg bg-muted/60 p-3 sm:grid-cols-2"
+                    >
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor={`edit-title-${i.id}`}>
+                          What did you buy?
+                        </Label>
+                        <Input
+                          id={`edit-title-${i.id}`}
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`edit-amount-${i.id}`}>Amount</Label>
+                        <Input
+                          id={`edit-amount-${i.id}`}
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="0.01"
+                          value={editAmount}
+                          onChange={(e) => setEditAmount(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`edit-date-${i.id}`}>Date</Label>
+                        <DatePicker
+                          id={`edit-date-${i.id}`}
+                          value={editDate}
+                          onChange={setEditDate}
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor={`edit-cat-${i.id}`}>Category</Label>
+                        <select
+                          id={`edit-cat-${i.id}`}
+                          value={editCategory}
+                          onChange={(e) => setEditCategory(e.target.value)}
+                          className={selectClass}
+                        >
+                          {editCategoryOptions.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2 sm:col-span-2">
+                        <Button
+                          type="submit"
+                          className="flex-1"
+                          disabled={updating}
+                        >
+                          {updating ? "Saving..." : "Save changes"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={cancelEdit}
+                          disabled={updating}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </li>
+                ) : (
+                  <li key={i.id} className="flex items-center gap-2 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{i.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {i.category} · {i.spent_on}
+                      </p>
+                    </div>
+                    <span className="font-semibold">{formatMoney(i.amount)}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Edit ${i.title}`}
+                      onClick={() => startEdit(i)}
+                    >
+                      <Pencil className="text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${i.title}`}
+                      onClick={() => remove(i.id)}
+                    >
+                      <Trash2 className="text-destructive" />
+                    </Button>
+                  </li>
+                )
+              )}
             </ul>
           )}
         </CardContent>
