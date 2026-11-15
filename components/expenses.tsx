@@ -25,27 +25,19 @@ type Expense = {
   spent_on: string;
 };
 
-const CATEGORIES = [
-  "Groceries",
-  "Vegetables & Fruits",
-  "Milk & Dairy",
-  "Spices",
-  "Oil & Rice",
-  "Gas",
-  "Other",
-];
-
-const selectClass =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm";
+const DEFAULT_CATEGORY = "Other";
 
 export function Expenses({ month }: { month: string }) {
   const [items, setItems] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Categories typed earlier (used as suggestions)
+  const [savedCategories, setSavedCategories] = useState<string[]>([]);
+
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState("");
   const [date, setDate] = useState(todayISO());
   const [saving, setSaving] = useState(false);
 
@@ -53,9 +45,17 @@ export function Expenses({ month }: { month: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editAmount, setEditAmount] = useState("");
-  const [editCategory, setEditCategory] = useState(CATEGORIES[0]);
+  const [editCategory, setEditCategory] = useState("");
   const [editDate, setEditDate] = useState(todayISO());
   const [updating, setUpdating] = useState(false);
+
+  const loadCategories = useCallback(async () => {
+    const { data } = await supabase.from("expenses").select("category");
+    const unique = Array.from(
+      new Set((data ?? []).map((d) => String(d.category).trim()).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+    setSavedCategories(unique);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,6 +81,10 @@ export function Expenses({ month }: { month: string }) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
   const total = useMemo(
     () => items.reduce((sum, i) => sum + i.amount, 0),
     [items]
@@ -101,14 +105,15 @@ export function Expenses({ month }: { month: string }) {
     const { error } = await supabase.from("expenses").insert({
       title: title.trim(),
       amount: value,
-      category,
+      category: category.trim() || DEFAULT_CATEGORY,
       spent_on: date,
     });
     if (error) setError(error.message);
     else {
       setTitle("");
       setAmount("");
-      await load();
+      setCategory("");
+      await Promise.all([load(), loadCategories()]);
     }
     setSaving(false);
   }
@@ -138,14 +143,14 @@ export function Expenses({ month }: { month: string }) {
       .update({
         title: editTitle.trim(),
         amount: value,
-        category: editCategory,
+        category: editCategory.trim() || DEFAULT_CATEGORY,
         spent_on: editDate,
       })
       .eq("id", editingId);
     if (error) setError(error.message);
     else {
       setEditingId(null);
-      await load();
+      await Promise.all([load(), loadCategories()]);
     }
     setUpdating(false);
   }
@@ -158,15 +163,20 @@ export function Expenses({ month }: { month: string }) {
     if (error) {
       setError(error.message);
       setItems(previous);
+    } else {
+      loadCategories();
     }
   }
 
-  const editCategoryOptions = CATEGORIES.includes(editCategory)
-    ? CATEGORIES
-    : [editCategory, ...CATEGORIES];
-
   return (
     <div className="space-y-4">
+      {/* Suggestions for the category boxes (your own earlier categories) */}
+      <datalist id="category-options">
+        {savedCategories.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
+
       <Card>
         <CardHeader className="pb-2">
           <CardDescription>Total spent this month</CardDescription>
@@ -223,19 +233,16 @@ export function Expenses({ month }: { month: string }) {
               <DatePicker id="exp-date" value={date} onChange={setDate} />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="exp-cat">Category</Label>
-              <select
+              <Label htmlFor="exp-cat">Category (type your own)</Label>
+              <Input
                 id="exp-cat"
+                list="category-options"
+                placeholder="e.g. Vegetables, Milk, Gas"
+                maxLength={40}
+                autoComplete="off"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className={selectClass}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <Button type="submit" className="sm:col-span-2" disabled={saving}>
               <Plus /> {saving ? "Saving..." : "Add expense"}
@@ -301,18 +308,15 @@ export function Expenses({ month }: { month: string }) {
                       </div>
                       <div className="space-y-2 sm:col-span-2">
                         <Label htmlFor={`edit-cat-${i.id}`}>Category</Label>
-                        <select
+                        <Input
                           id={`edit-cat-${i.id}`}
+                          list="category-options"
+                          placeholder="e.g. Vegetables, Milk, Gas"
+                          maxLength={40}
+                          autoComplete="off"
                           value={editCategory}
                           onChange={(e) => setEditCategory(e.target.value)}
-                          className={selectClass}
-                        >
-                          {editCategoryOptions.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       <div className="flex gap-2 sm:col-span-2">
                         <Button
