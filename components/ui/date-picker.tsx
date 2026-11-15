@@ -56,14 +56,29 @@ function usePopover() {
   return { open, setOpen, ref };
 }
 
+// Pink theme for the pickers
 const triggerClass =
-  "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-left text-base ring-offset-background transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm";
+  "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-pink-300 bg-white px-3 py-2 text-left text-base font-medium text-slate-900 ring-offset-background transition-colors hover:bg-pink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 md:text-sm";
 
 const popoverClass =
-  "absolute left-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border bg-card p-3 text-card-foreground shadow-lg";
+  "absolute left-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-pink-200 bg-white p-3 text-slate-900 shadow-lg shadow-pink-200/60";
 
 const navButtonClass =
-  "flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "flex h-8 w-8 items-center justify-center rounded-md text-pink-600 transition-colors hover:bg-pink-100 hover:text-pink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400";
+
+const cellBase =
+  "flex w-full items-center justify-center rounded-md text-sm font-medium text-slate-900 transition-colors hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400";
+
+const cellToday = "border border-pink-500 font-semibold text-pink-700";
+
+const cellSelected =
+  "bg-pink-600 font-semibold text-white hover:bg-pink-600";
+
+const footerLink =
+  "rounded-md px-2 py-1 text-sm font-medium text-pink-600 hover:bg-pink-100";
+
+const footerMuted =
+  "rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-pink-50";
 
 type PickerProps = {
   value: string;
@@ -122,7 +137,7 @@ export function DatePicker({ value, onChange, id, className }: PickerProps) {
             year: "numeric",
           })}
         </span>
-        <CalendarDays className="h-4 w-4 text-primary" />
+        <CalendarDays className="h-4 w-4 text-pink-600" />
       </button>
 
       {open && (
@@ -136,7 +151,7 @@ export function DatePicker({ value, onChange, id, className }: PickerProps) {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-semibold">{heading}</span>
+            <span className="text-sm font-bold text-slate-900">{heading}</span>
             <button
               type="button"
               aria-label="Next month"
@@ -151,7 +166,7 @@ export function DatePicker({ value, onChange, id, className }: PickerProps) {
             {WEEKDAYS.map((d) => (
               <span
                 key={d}
-                className="py-1 text-xs font-medium text-muted-foreground"
+                className="py-1 text-xs font-semibold text-pink-600"
               >
                 {d}
               </span>
@@ -170,10 +185,10 @@ export function DatePicker({ value, onChange, id, className }: PickerProps) {
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex h-9 w-full items-center justify-center rounded-md text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    isToday && !isSelected && "border border-primary text-primary",
-                    isSelected &&
-                      "bg-primary font-semibold text-primary-foreground hover:bg-primary"
+                    cellBase,
+                    "h-9",
+                    isToday && !isSelected && cellToday,
+                    isSelected && cellSelected
                   )}
                 >
                   {day}
@@ -182,21 +197,21 @@ export function DatePicker({ value, onChange, id, className }: PickerProps) {
             })}
           </div>
 
-          <div className="mt-3 flex justify-between border-t pt-2">
+          <div className="mt-3 flex justify-between border-t border-pink-100 pt-2">
             <button
               type="button"
               onClick={() => {
                 onChange(today);
                 setOpen(false);
               }}
-              className="rounded-md px-2 py-1 text-sm font-medium text-primary hover:bg-accent"
+              className={footerLink}
             >
               Today
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent"
+              className={footerMuted}
             >
               Close
             </button>
@@ -232,7 +247,7 @@ export function MonthPicker({ value, onChange, id, className }: PickerProps) {
         className={cn(triggerClass, "w-auto min-w-[11rem]")}
       >
         <span>{monthLabel(value)}</span>
-        <CalendarDays className="h-4 w-4 text-primary" />
+        <CalendarDays className="h-4 w-4 text-pink-600" />
       </button>
 
       {open && (
@@ -246,7 +261,7 @@ export function MonthPicker({ value, onChange, id, className }: PickerProps) {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-semibold">{year}</span>
+            <span className="text-sm font-bold text-slate-900">{year}</span>
             <button
               type="button"
               aria-label="Next year"
@@ -271,12 +286,10 @@ export function MonthPicker({ value, onChange, id, className }: PickerProps) {
                     setOpen(false);
                   }}
                   className={cn(
-                    "h-10 rounded-md text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    isCurrent &&
-                      !isSelected &&
-                      "border border-primary text-primary",
-                    isSelected &&
-                      "bg-primary font-semibold text-primary-foreground hover:bg-primary"
+                    cellBase,
+                    "h-10",
+                    isCurrent && !isSelected && cellToday,
+                    isSelected && cellSelected
                   )}
                 >
                   {name}
@@ -285,21 +298,21 @@ export function MonthPicker({ value, onChange, id, className }: PickerProps) {
             })}
           </div>
 
-          <div className="mt-3 flex justify-between border-t pt-2">
+          <div className="mt-3 flex justify-between border-t border-pink-100 pt-2">
             <button
               type="button"
               onClick={() => {
                 onChange(thisMonth);
                 setOpen(false);
               }}
-              className="rounded-md px-2 py-1 text-sm font-medium text-primary hover:bg-accent"
+              className={footerLink}
             >
               This month
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent"
+              className={footerMuted}
             >
               Close
             </button>
