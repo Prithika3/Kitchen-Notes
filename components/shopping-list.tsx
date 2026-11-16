@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FoodPicker } from "@/components/food-picker";
+import { withEmoji } from "@/lib/food-items";
 import {
   Card,
   CardContent,
@@ -229,7 +230,7 @@ export function ShoppingList({
                       i.is_bought && "text-muted-foreground line-through"
                     )}
                   >
-                    <span className="font-medium">{i.name}</span>
+                    <span className="font-medium">{withEmoji(i.name)}</span>
                     {i.quantity && (
                       <span className="ml-2 text-sm text-muted-foreground">
                         {i.quantity}
