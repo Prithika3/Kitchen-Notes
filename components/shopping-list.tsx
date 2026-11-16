@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FoodPicker } from "@/components/food-picker";
 import {
   Card,
   CardContent,
@@ -24,7 +25,13 @@ type Item = {
   is_bought: boolean;
 };
 
-export function ShoppingList({ month }: { month: string }) {
+export function ShoppingList({
+  month,
+  canEdit = false,
+}: {
+  month: string;
+  canEdit?: boolean;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +151,7 @@ export function ShoppingList({ month }: { month: string }) {
         </CardHeader>
       </Card>
 
+      {canEdit && (
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Add item to buy</CardTitle>
@@ -169,6 +177,9 @@ export function ShoppingList({ month }: { month: string }) {
                 onChange={(e) => setQuantity(e.target.value)}
               />
             </div>
+            <div className="sm:col-span-3">
+              <FoodPicker onPick={(item) => setName(item)} />
+            </div>
             <div className="flex flex-col gap-2 sm:col-span-3 sm:flex-row">
               <Button type="submit" disabled={saving} className="flex-1">
                 <Plus /> {saving ? "Saving..." : "Add item"}
@@ -185,6 +196,7 @@ export function ShoppingList({ month }: { month: string }) {
           </form>
         </CardContent>
       </Card>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {info && <p className="text-sm text-muted-foreground">{info}</p>}
@@ -208,6 +220,7 @@ export function ShoppingList({ month }: { month: string }) {
                     id={`item-${i.id}`}
                     checked={i.is_bought}
                     onCheckedChange={(c) => toggle(i, c === true)}
+                    disabled={!canEdit}
                   />
                   <label
                     htmlFor={`item-${i.id}`}
@@ -223,14 +236,16 @@ export function ShoppingList({ month }: { month: string }) {
                       </span>
                     )}
                   </label>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Delete ${i.name}`}
-                    onClick={() => remove(i.id)}
-                  >
-                    <Trash2 className="text-destructive" />
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${i.name}`}
+                      onClick={() => remove(i.id)}
+                    >
+                      <Trash2 className="text-destructive" />
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { FoodPicker } from "@/components/food-picker";
 import {
   Card,
   CardContent,
@@ -27,7 +28,13 @@ type Expense = {
 
 const DEFAULT_CATEGORY = "Other";
 
-export function Expenses({ month }: { month: string }) {
+export function Expenses({
+  month,
+  canEdit = false,
+}: {
+  month: string;
+  canEdit?: boolean;
+}) {
   const [items, setItems] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -198,6 +205,7 @@ export function Expenses({ month }: { month: string }) {
         )}
       </Card>
 
+      {canEdit && (
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Add expense</CardTitle>
@@ -212,6 +220,12 @@ export function Expenses({ month }: { month: string }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+              />
+              <FoodPicker
+                onPick={(item, group) => {
+                  setTitle(item);
+                  setCategory(group);
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -250,6 +264,7 @@ export function Expenses({ month }: { month: string }) {
           </form>
         </CardContent>
       </Card>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -347,22 +362,26 @@ export function Expenses({ month }: { month: string }) {
                       </p>
                     </div>
                     <span className="font-semibold">{formatMoney(i.amount)}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Edit ${i.title}`}
-                      onClick={() => startEdit(i)}
-                    >
-                      <Pencil className="text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Delete ${i.title}`}
-                      onClick={() => remove(i.id)}
-                    >
-                      <Trash2 className="text-destructive" />
-                    </Button>
+                    {canEdit && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${i.title}`}
+                          onClick={() => startEdit(i)}
+                        >
+                          <Pencil className="text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete ${i.title}`}
+                          onClick={() => remove(i.id)}
+                        >
+                          <Trash2 className="text-destructive" />
+                        </Button>
+                      </>
+                    )}
                   </li>
                 )
               )}
