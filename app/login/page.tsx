@@ -52,7 +52,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 p-4"
+      style={
+        {
+          "--primary": "224 76% 33%",
+          "--ring": "224 76% 45%",
+          "--accent": "214 95% 93%",
+          "--accent-foreground": "224 64% 20%",
+        } as React.CSSProperties
+      }
+    >
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
