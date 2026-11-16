@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FoodPicker } from "@/components/food-picker";
-import { withEmoji } from "@/lib/food-items";
 import {
   Card,
   CardContent,
@@ -357,7 +356,7 @@ export function Expenses({
                 ) : (
                   <li key={i.id} className="flex items-center gap-2 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{withEmoji(i.title)}</p>
+                      <p className="truncate font-medium">{i.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {i.category} · {i.spent_on}
                       </p>
